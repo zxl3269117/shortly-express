@@ -78,12 +78,45 @@ app.post('/links',
 /************************************************************/
 
 app.post('/signup', (req, res, next) => {
-
-})
+  var username = req.body.username;
+  var password = req.body.password;
+  models.User.get({ username: username })
+    .then(function (result) {
+      if (result.salt) {
+        res.status(304).redirect('/signup');
+      } else {
+        models.Users.create({ username, password })
+          .then(function (result) {
+            res.status(201).redirect('/index');
+          })
+          .error(error => {
+            res.status(500).send(error);
+          });
+      }
+    })
+});
 
 app.post('/login', (req, res, next) => {
+  var username = req.body.username;
+  var attempt = req.body.password;
+  models.Users.get({ username: username })
+    .then(function (result) {
+      var password = result.password;
+      var salt = result.salt;
+      return models.Users.compare(attempt, password, salt);
+    })
+    .then(function (matched) {
+      if (matched) {
+        res.sendStatus(201);
+      } else {
+        res.sendStatus(401);
+      }
+    })
+    .error(error => {
+      res.status(500).send(error);
+    });
 
-})
+});
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
