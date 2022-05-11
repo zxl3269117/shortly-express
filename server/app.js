@@ -80,36 +80,39 @@ app.post('/links',
 app.post('/signup', (req, res, next) => {
   var username = req.body.username;
   var password = req.body.password;
-  models.User.get({ username: username })
+  return models.Users.get({ username: username })
     .then(function (result) {
-      if (result.salt) {
+      if (result) {
         res.status(304).redirect('/signup');
       } else {
-        models.Users.create({ username, password })
+        return models.Users.create({ username, password })
           .then(function (result) {
-            res.status(201).redirect('/index');
+            res.status(201).redirect('/');
           })
           .error(error => {
             res.status(500).send(error);
           });
       }
-    })
+    });
 });
 
 app.post('/login', (req, res, next) => {
   var username = req.body.username;
   var attempt = req.body.password;
-  models.Users.get({ username: username })
+  return models.Users.get({ username: username })
     .then(function (result) {
+      if (!result) {
+        return res.status(304).redirect('/login');
+      }
       var password = result.password;
       var salt = result.salt;
       return models.Users.compare(attempt, password, salt);
     })
     .then(function (matched) {
       if (matched) {
-        res.sendStatus(201);
+        res.status(302).redirect('/');
       } else {
-        res.sendStatus(401);
+        res.status(401).redirect('/login');
       }
     })
     .error(error => {
