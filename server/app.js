@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(parseCookies, Auth.createSession, Auth.verifySession);
+app.use(parseCookies, Auth.createSession);
 app.use(express.static(path.join(__dirname, '../public')));
 
 
@@ -97,6 +97,9 @@ app.post('/signup', (req, res, next) => {
       } else {
         models.Users.create({ username, password })
           .then(result => {
+            return models.Sessions.update({hash: req.session.hash}, {userId: result.insertId});
+          })
+          .then(result => {
             res.status(201).redirect('/');
           })
           .error(error => {
@@ -129,6 +132,12 @@ app.post('/login', (req, res, next) => {
       res.status(500).send(error);
     });
 
+});
+
+app.get('/logout', (req, res, next) => {
+  models.Sessions.delete({hash: req.cookies.shortlyid});
+  console.log(req.cookies);
+  res.sendStatus(200);
 });
 
 /************************************************************/

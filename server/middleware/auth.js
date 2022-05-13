@@ -19,17 +19,6 @@ module.exports.createSession = (req, res, next) => {
         // construct the response cookie and the request session
         res.cookie('shortlyid', result.hash);
         req.session.hash = result.hash;
-
-        // find user in db
-        return models.Users.get({ username });
-      })
-      .then(result => {
-        // if user found (signed up before)
-        if (result) {
-          req.session.user = result.username;
-          // update session table with userId field
-          models.Sessions.update({ hash: req.session.hash }, {userId: result.userId});
-        }
         next();
       })
       .catch((err) => { console.log(err); });
@@ -77,11 +66,3 @@ module.exports.createSession = (req, res, next) => {
 /************************************************************/
 // Add additional authentication middleware functions below
 /************************************************************/
-
-module.exports.verifySession = (req, res, next) => {
-  console.log(req.url);
-  /**
-   * url requires login: '/', '/create'
-   */
-  next();
-};
