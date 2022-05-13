@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(parseCookies, Auth.createSession);
+app.use(parseCookies, Auth.createSession, Auth.verifySession);
 app.use(express.static(path.join(__dirname, '../public')));
 
 
@@ -79,16 +79,24 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/signup', (req, res, next) => {
+  res.status(200).render('signup');
+});
+
+app.get('/login', (req, res, next) => {
+  res.status(200).render('login');
+});
+
 app.post('/signup', (req, res, next) => {
   var username = req.body.username;
   var password = req.body.password;
-  return models.Users.get({ username: username })
-    .then(function (result) {
+  return models.Users.get({ username })
+    .then(result => {
       if (result) {
         res.status(304).redirect('/signup');
       } else {
-        return models.Users.create({ username, password })
-          .then(function (result) {
+        models.Users.create({ username, password })
+          .then(result => {
             res.status(201).redirect('/');
           })
           .error(error => {
