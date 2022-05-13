@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(parseCookies, Auth.createSession);
+app.use(parseCookies, Auth.verifySession, Auth.createSession);
 app.use(express.static(path.join(__dirname, '../public')));
 
 
