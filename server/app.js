@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(parseCookies, Auth.verifySession, Auth.createSession);
+app.use(parseCookies, Auth.createSession, Auth.verifySession);
 app.use(express.static(path.join(__dirname, '../public')));
 
 
@@ -90,14 +90,18 @@ app.get('/login', (req, res, next) => {
 app.post('/signup', (req, res, next) => {
   var username = req.body.username;
   var password = req.body.password;
+
+  // checking if username already registered
   return models.Users.get({ username })
     .then(result => {
       if (result) {
         res.status(304).redirect('/signup');
       } else {
+        // if username is not taken, create the user and pw
         models.Users.create({ username, password })
           .then(result => {
-            return models.Sessions.update({hash: req.session.hash}, {userId: result.insertId});
+            // links the hash with user in the session table to indicate 'login' status
+            return models.Sessions.update({ hash: req.session.hash }, { userId: result.insertId });
           })
           .then(result => {
             res.status(201).redirect('/');
@@ -112,6 +116,7 @@ app.post('/signup', (req, res, next) => {
 app.post('/login', (req, res, next) => {
   var username = req.body.username;
   var attempt = req.body.password;
+  var id;
   return models.Users.get({ username: username })
     .then(function (result) {
       if (!result) {
@@ -119,11 +124,17 @@ app.post('/login', (req, res, next) => {
       }
       var password = result.password;
       var salt = result.salt;
+      id = result.id;
       return models.Users.compare(attempt, password, salt);
     })
     .then(function (matched) {
       if (matched) {
-        res.status(302).redirect('/');
+        models.Sessions.update({hash: req.session.hash}, {userId: id})
+          .then(result => {
+            console.log(result);
+            res.status(302).redirect('/');
+          })
+          .catch( err => console.log(err) );
       } else {
         res.status(401).redirect('/login');
       }
@@ -135,9 +146,9 @@ app.post('/login', (req, res, next) => {
 });
 
 app.get('/logout', (req, res, next) => {
-  models.Sessions.delete({hash: req.cookies.shortlyid});
-  console.log(req.cookies);
-  res.sendStatus(200);
+  models.Sessions.delete({ hash: req.cookies.shortlyid });
+  // //res.sendStatus(200);
+  res.status(200).redirect('/login');
 });
 
 /************************************************************/

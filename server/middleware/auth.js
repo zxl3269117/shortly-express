@@ -26,41 +26,40 @@ module.exports.createSession = (req, res, next) => {
 
   // if request has a cookie
   if (Object.keys(cookie).length) {
-    next();
-    // var hash = cookie.shortlyId;
+    var hash = cookie.shortlyid;
 
-    // // find the session from db
-    // models.Sessions.get({ hash })
-    //   .then(result => {
+    // find the session from db
+    models.Sessions.get({ hash })
+      .then(result => {
 
-    //     // if session is valid
-    //     if (result) {
-    //       res.cookie('shortlyid', result.hash);
-    //       req.session.hash = result.hash;
-    //       if (result.userId) {
-    //         req.session.userId = result.userId;
-    //         req.session.user = result.user;
-    //       }
-    //       next();
-    //     }
+        // if session is valid
+        if (result) {
+          res.cookie('shortlyid', result.hash);
+          req.session.hash = result.hash;
+          if (result.userId) {
+            req.session.userId = result.userId;
+            req.session.user = result.user;
+          }
+          next();
+        }
 
-    //     // if session is not valid
-    //     if (!result) {
-    //       models.Sessions.create()
-    //         .then(result => {
-    //           return models.Sessions.get({id: result.insertId});
-    //         })
-    //         .then(result => {
-    //           res.clearCookie('shortlyid');
-    //           res.cookie('shortlyid', result.hash);
-    //           req.session.hash = result.hash;
-    //           next();
-    //         });
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     console.log(err);
-    //   });
+        // if session is not valid
+        if (!result) {
+          models.Sessions.create()
+            .then(result => {
+              return models.Sessions.get({id: result.insertId});
+            })
+            .then(result => {
+              res.clearCookie('shortlyid');
+              res.cookie('shortlyid', result.hash);
+              req.session.hash = result.hash;
+              next();
+            });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 };
 
@@ -69,42 +68,17 @@ module.exports.createSession = (req, res, next) => {
 /************************************************************/
 
 module.exports.verifySession = (req, res, next) => {
-  console.log(req.cookies.shortlyid);
-
-  if (!req.cookies.shortlyid) {
-    res.redirect(401, '/login');
+  console.log('request method', req.method);
+  if (req.method === 'GET' && (req.path === '/' || req.path === '/create' || req.path === '/links')) {
+    console.log('req.cookies in verify session', req.cookies);
+    if (models.Sessions.isLoggedIn(req.cookies.shortlyid)) {
+      next();
+    } else {
+      res.status(401).redirect('/login');
+    }
+  } else {
+    console.log('/signup post reqest should lead to here');
     next();
   }
-
-  var hash = req.cookies.shortlyid;
-  models.Sessions.get({ hash })
-    .then(result => {
-      // if session is valid
-      if (result) {
-        // res.cookie('shortlyid', result.hash);
-        req.session.hash = result.hash;
-        if (result.userId) {
-          req.session.userId = result.userId;
-          req.session.user = result.user;
-        }
-        next();
-      }
-
-      // if session is not valid
-      if (!result) {
-        models.Sessions.create()
-          .then(result => {
-            return models.Sessions.get({id: result.insertId});
-          })
-          .then(result => {
-            // res.clearCookie('shortlyid');
-            // res.cookie('shortlyid', result.hash);
-            req.session.hash = result.hash;
-            next();
-          });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  return models.Sessions.isLoggedIn(req.session);
 };
