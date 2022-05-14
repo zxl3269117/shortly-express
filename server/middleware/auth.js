@@ -68,16 +68,13 @@ module.exports.createSession = (req, res, next) => {
 /************************************************************/
 
 module.exports.verifySession = (req, res, next) => {
-  console.log('request method', req.method);
   if (req.method === 'GET' && (req.path === '/' || req.path === '/create' || req.path === '/links')) {
-    console.log('req.cookies in verify session', req.cookies);
-    if (models.Sessions.isLoggedIn(req.cookies.shortlyid)) {
+    if (models.Sessions.isLoggedIn(req.session)) {
       next();
     } else {
       res.status(401).redirect('/login');
     }
   } else {
-    console.log('/signup post reqest should lead to here');
     next();
   }
   return models.Sessions.isLoggedIn(req.session);

@@ -131,7 +131,6 @@ app.post('/login', (req, res, next) => {
       if (matched) {
         models.Sessions.update({hash: req.session.hash}, {userId: id})
           .then(result => {
-            console.log(result);
             res.status(302).redirect('/');
           })
           .catch( err => console.log(err) );

@@ -630,7 +630,7 @@ describe('', function() {
 
     describe('Creating new links:', function(done) {
 
-      xit('Only shortens valid urls, returning a 404 - Not found for invalid urls', function(done) {
+      it('Only shortens valid urls, returning a 404 - Not found for invalid urls', function(done) {
         var options = {
           'method': 'POST',
           'uri': 'http://127.0.0.1:4568/links',
@@ -650,7 +650,6 @@ describe('', function() {
 
         requestWithSession(options, function(error, res, body) {
           if (error) { return done(error); }
-          console.log('res.body in test', res.body);
           expect(res.body.url).to.equal('http://www.google.com/');
           expect(res.body.code).to.not.be.null;
           done();
