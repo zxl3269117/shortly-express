@@ -147,6 +147,48 @@ describe('', function() {
       });
     });
 
+    // should redirec to /signup if entered empty password
+    it('does not create a file if password is empty', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': 'Samantha',
+          'password': ''
+        }
+      };
+      request(options, function(error, res, body) {
+        var queryString = 'SELECT * FROM users where username = "Samantha"';
+        db.query(queryString, function(err, rows) {
+          if (err) { done(err); }
+          expect(rows.user).to.be.undefined;
+          expect(res.req.path).to.equal('/signup');
+          done();
+        });
+      });
+    });
+
+    // should redirec to /signup if entered empty username
+    it('does not create a file if password is empty', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': '',
+          'password': 'Samantha'
+        }
+      };
+      request(options, function(error, res, body) {
+        var queryString = 'SELECT * FROM users where username = "Samantha"';
+        db.query(queryString, function(err, rows) {
+          if (err) { done(err); }
+          expect(rows.user).to.be.undefined;
+          expect(res.req.path).to.equal('/signup');
+          done();
+        });
+      });
+    });
+
     it('does not store the user\'s original text password', function(done) {
       var options = {
         'method': 'POST',
@@ -760,6 +802,28 @@ describe('', function() {
           expect(body).to.include('"code":"' + link.code + '"');
           done();
         });
+      });
+
+      // check if the visit numbers are increasing after clicking on the shorted url
+      it('Visits increase after clicking on the shortened url', function(done) {
+        var options = {
+          'method': 'GET',
+          'uri': 'http://127.0.0.1:4568/' + link.code
+        };
+        var options2 = {
+          'method': 'GET',
+          'uri': 'http://127.0.0.1:4568/links'
+        };
+
+        requestWithSession(options, function (error, res, body) {
+          if (error) { return done(error); }
+          requestWithSession(options2, function (error, res, body) {
+            if (error) { return done(error); }
+            expect(body).to.include('"visits":1');
+            done();
+          });
+        });
+
       });
     });
   });

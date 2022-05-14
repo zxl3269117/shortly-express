@@ -91,26 +91,31 @@ app.post('/signup', (req, res, next) => {
   var username = req.body.username;
   var password = req.body.password;
 
-  // checking if username already registered
-  return models.Users.get({ username })
-    .then(result => {
-      if (result) {
-        res.status(304).redirect('/signup');
-      } else {
-        // if username is not taken, create the user and pw
-        models.Users.create({ username, password })
-          .then(result => {
-            // links the hash with user in the session table to indicate 'login' status
-            return models.Sessions.update({ hash: req.session.hash }, { userId: result.insertId });
-          })
-          .then(result => {
-            res.status(201).redirect('/');
-          })
-          .error(error => {
-            res.status(500).send(error);
-          });
-      }
-    });
+  // if password is empty
+  if (!password) {
+    res.status(401).redirect('/signup');
+  } else {
+    // checking if username already registered
+    return models.Users.get({ username })
+      .then(result => {
+        if (result) {
+          res.status(304).redirect('/signup');
+        } else {
+          // if username is not taken, create the user and pw
+          models.Users.create({ username, password })
+            .then(result => {
+              // links the hash with user in the session table to indicate 'login' status
+              return models.Sessions.update({ hash: req.session.hash }, { userId: result.insertId });
+            })
+            .then(result => {
+              res.status(201).redirect('/');
+            })
+            .error(error => {
+              res.status(500).send(error);
+            });
+        }
+      });
+  }
 });
 
 app.post('/login', (req, res, next) => {
